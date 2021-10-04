@@ -40,11 +40,6 @@ CYAN=\033[1;36m
 NC=\033[0m
 endif
 
-# create GOBIN if not specified
-ifndef GOBIN
-GOBIN=$(shell go env GOPATH)/bin
-endif
-
 ifeq ($(shell uname -m),x86_64)
 	ARCH ?= amd64
 else 
@@ -120,7 +115,7 @@ bundle-remove-local: ## Removes ./bundle and ./bundle.Dockerfile (these are gene
 	@echo "$(YELLOW)Local ./bundle directory has been removed$(NC)\n"
 
 .PHONY: bundle-full
-bundle-full: deployment-blueprint bundle-remove-local bundle-generate bundle-fix-dockerfile bundle-add-examples bundle-add-crd-info bundle-validate bundle-image-build ## Prepares the container image w/ the bundle including the necessary intermediate steps
+bundle-full: deployment-blueprint bundle-remove-local bundle-generate bundle-fix-dockerfile bundle-add-examples bundle-add-crd-info bundle-validate ## Prepares the container image w/ the bundle including the necessary intermediate steps
 	@echo "\n\n$(YELLOW)Full container image ($(BUNDLE_IMAGE_REPO)/$(BUNDLE_IMAGE_NAME):$(BUNDLE_VERSION)) w/ bundle has been built$(NC)\n"
 	@echo "Continue with make bundle-image-push\n"
 
@@ -143,7 +138,6 @@ bundle-image-push: ## Push the bundle image to the pre-defined image registry
 # this assumes the OpenShift is up and running
 .PHONY: bundle-deploy
 bundle-deploy: ## Deploys the bundle image into OpenShift's catalog, this will also deploy the operator
-	// oc create ns
 	$(call operator-sdk,run,bundle,-n,$(PREFERRED_NS),$(BUNDLE_IMAGE_REPO)/$(BUNDLE_IMAGE_NAME):$(BUNDLE_VERSION))
 
 .PHONY: cleanup
@@ -162,8 +156,8 @@ help: ## Show this help
 define operator-sdk
 	@which operator-sdk > /dev/null || { \
 		echo "$(YELLOW)Downloading operator-sdk..$(NC)" ; \
-		curl -sLo $(GOBIN)/operator-sdk $(OPERATOR_SDK_DL_URL)/operator-sdk_$(OS)_$(ARCH) ; \
-		chmod +x $(GOBIN)/operator-sdk ; \
+		curl -sLo /usr/bin//operator-sdk $(OPERATOR_SDK_DL_URL)/operator-sdk_$(OS)_$(ARCH) ; \
+		chmod +x /usr/bin//operator-sdk ; \
 	}
-	$(GOBIN)/operator-sdk $1 $2 $3 $4 $5 $6 $7 $8 $9 $(10)
+	operator-sdk $1 $2 $3 $4 $5 $6 $7 $8 $9 $(10)
 endef
