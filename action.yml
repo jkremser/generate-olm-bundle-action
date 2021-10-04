@@ -1,0 +1,21 @@
+name: 'Generate OLM manifests'
+description: 'Action for generating OLM bundle manifests'
+branding:
+  icon: file-plus
+  color: purple
+inputs:
+  repo:
+    description: 'Git repository'
+    required: true
+  bundleVersion:
+    description: 'Version of the bundle that should be generated'
+    required: true
+outputs:
+  result:
+    description: 'The result'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.repo }}
+    - ${{ inputs.bundleVersion }}
