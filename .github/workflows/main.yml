@@ -1,0 +1,14 @@
+❯on: [push]
+jobs:
+  fib:
+    runs-on: ubuntu-latest
+    name: Test the action
+    steps:
+      - name: Generate the OLM manifests
+        id: fib
+        uses: jkremser/generate-olm-bundle-action@0.0.1
+        with:
+          repo: https://github.com/k8gb-io/k8gb
+          bundleVersion: 0.0.1
+      # - name: Get the output time
+      #   run: echo "The result is ${{ steps.fib.outputs.result }}"
