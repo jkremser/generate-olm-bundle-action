@@ -9,14 +9,16 @@ jobs:
         id: olm
         uses: jkremser/generate-olm-bundle-action@0.0.1
         with:
-          repoURL: https://github.com/k8gb-io/k8gb
+          # either full git url or github handle (org/project)
+          repoURL: k8gb-io/k8gb
+          targetRevision: operatorhub
           bundleVersion: 0.0.1
           crdsDir: chart/k8gb/templates/crds
           deployDir: ./deploy-tmp/deploy-all.yaml
           preGenerateHook: make -f /Makefile deployment-blueprint
           postGenerateHook: make -f /Makefile bundle-add-examples bundle-add-crd-info
+          prepareHelmCommand: cd ./chart/k8gb && helm dependency update
           helmCommand: |
-            helm dependency update && \
             helm -n placeholder template ./chart/k8gb \
               --name-template=k8gb \
               --set k8gb.securityContext.runAsUser=null \

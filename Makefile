@@ -30,7 +30,9 @@ CRDS_DIR ?= chart/k8gb/templates/crds
 DEPLOY_DIR ?= deploy-tmp/
 OPERATOR_SDK_VERSION ?= v1.13.0
 OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/$(OPERATOR_SDK_VERSION)
-PWD ?=  $(shell pwd)
+PWD ?= $(shell pwd)
+REPO_ROOT ?= $(PWD)
+PREPARE_HELM_COMMAND ?= "cd ./chart/k8gb && helm dependency update"
 
 ifndef NO_COLOR
 YELLOW=\033[0;33m
@@ -60,15 +62,19 @@ OS=$(shell uname | tr '[:upper:]' '[:lower:]')
 deployment-blueprint: ## Renders the helm chart to provide a snapshot of the deployment manifests
 	@echo "$(CYAN)Generating deployment yaml manifests using helm..$(NC)\n"
 	-rm -Rf $(DEPLOY_DIR)
-	mkdir $(DEPLOY_DIR)
-	$(shell $(HELM_COMMAND) > all.yaml)
+	mkdir -p $(DEPLOY_DIR)
+	eval $(PREPARE_HELM_COMMAND)
+	sh -c "$(HELM_COMMAND)" > all.yaml
+	@echo "first 5 lines:"
+	-@head -5 all.yaml
+	@echo "..."
 	-mv all.yaml $(DEPLOY_DIR)
 	@echo "$(YELLOW)Deployment manifests have been generated$(NC)\n"
 
 .PHONY: bundle-generate
 bundle-generate: ## Generate bundle directory for Operator Lifecycle Manager
 	@echo "$(CYAN)Generating bundle..$(NC)\n"
-	$(call operator-sdk,generate,bundle,--crds-dir,$(CRDS_DIR),--deploy-dir,$(DEPLOY_DIR),-v,$(BUNDLE_VERSION))
+	$(call operator-sdk,generate bundle --crds-dir $(CRDS_DIR) --deploy-dir $(DEPLOY_DIR) -v $(BUNDLE_VERSION))
 	-rm -Rf $(DEPLOY_DIR)
 
 needs-yq:
@@ -111,7 +117,7 @@ bundle-full: deployment-blueprint bundle-remove-local bundle-generate bundle-add
 .PHONY: bundle-validate
 bundle-validate: ## Validate the CSV file
 	@echo "$(CYAN)Validating bundle..$(NC)\n"
-	$(call operator-sdk,bundle,validate,./bundle,--optional-values=index-path=bundle.Dockerfile)
+	$(call operator-sdk,bundle validate ./bundle --optional-values=index-path=bundle.Dockerfile)
 	@echo "$(YELLOW)Bundle is OK!$(NC)\n"
 
 .PHONY: help
@@ -126,8 +132,8 @@ help: ## Show this help
 define operator-sdk
 	@which operator-sdk > /dev/null || { \
 		echo "$(YELLOW)Downloading operator-sdk..$(NC)" ; \
-		curl -sLo /usr/bin//operator-sdk $(OPERATOR_SDK_DL_URL)/operator-sdk_$(OS)_$(ARCH) ; \
-		chmod +x /usr/bin//operator-sdk ; \
+		curl -sLo /usr/bin/operator-sdk $(OPERATOR_SDK_DL_URL)/operator-sdk_$(OS)_$(ARCH) ; \
+		chmod +x /usr/bin/operator-sdk ; \
 	}
-	operator-sdk $1 $2 $3 $4 $5 $6 $7 $8 $9 $(10)
+	operator-sdk $1
 endef

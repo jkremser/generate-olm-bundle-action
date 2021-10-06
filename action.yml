@@ -26,6 +26,9 @@ inputs:
   helmCommand:
     description: 'Use this command to render the deployment yamls for the operator (when using Helm chart). Redirect the output to the file under {deployDir}'
     required: false
+  prepareHelmCommand:
+    description: 'Use this to run helm update for instance'
+    required: false
   postGenerateHook:
     description: 'Run these commands after operator-sdk has created the bundle files. Perhaps add additional metadata etc. yq is installed on the container image'
   preGenerateHook:
@@ -53,6 +56,7 @@ runs:
     OPERATOR_SDK_VERSION: ${{ inputs.operatorSdkVersion }}
     POST_GENERATE_HOOK: ${{ inputs.postGenerateHook }}
     PRE_GENERATE_HOOK: ${{ inputs.preGenerateHook }}
+    PREPARE_HELM_COMMAND: ${{ inputs.prepareHelmCommand }}
     VALIDATE_BUNDLE: ${{ inputs.validateBundle }}
   args:
     - /generate.sh

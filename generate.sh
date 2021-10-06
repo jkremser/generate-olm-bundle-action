@@ -7,18 +7,21 @@ _REPO=$1
 _BUNDLE_VERSION=$2
 
 main() {
-    echo PWD is ${PWD}
+    env | sort
     
     # if repoURL contains exactly 1 / (org/repo handle), prepend the github prefix
     [[ "${_REPO}" =~ ^[^\/]*\/[^\/]*$ ]] && _REPO="https://github.com/${_REPO}"
     echo Cloning the repo ${_REPO}..
     git clone ${_REPO} && cd "$(basename "$_" .git)"
-    git reset --hard ${GIT_TARGET_REVISION}
+    git reset --hard ${GIT_TARGET_REVISION} 2> /dev/null || git reset --hard origin/${GIT_TARGET_REVISION}
+    export REPO_ROOT=${PWD}
+    echo PWD is ${PWD}
 
     # pre-generate hook
     [[ ! -z "${PRE_GENERATE_HOOK}" ]] && {
         echo Running pre-generate hook..
-        echo HELM_COMMAND: "${HELM_COMMAND}"
+        [[ ! -z "${PREPARE_HELM_COMMAND}" ]] && echo PREPARE_HELM_COMMAND: "${PREPARE_HELM_COMMAND}"
+        [[ ! -z "${HELM_COMMAND}" ]] && echo HELM_COMMAND: "${HELM_COMMAND}"
         echo ${PRE_GENERATE_HOOK}
         set -x
         eval ${PRE_GENERATE_HOOK}
