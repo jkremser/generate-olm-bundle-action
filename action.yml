@@ -4,18 +4,57 @@ branding:
   icon: file-plus
   color: purple
 inputs:
-  repo:
+  repoURL:
     description: 'Git repository'
     required: true
+  targetRevision:
+    description: 'Specific commit, tag or branch in given git repository. Defaults to HEAD'
+    default: HEAD
   bundleVersion:
     description: 'Version of the bundle that should be generated'
     required: true
+  crdsDir:
+    description: 'Relative path on the repo to the crds'
+    required: true
+  validateBundle:
+    description: 'If "true" operator-sdk bundle validate will be run'
+    required: false
+    default: 'true'
+  deployDir:
+    description: 'Relative path on the repo to the deployment yaml manifests'
+    required: true
+  helmCommand:
+    description: 'Use this command to render the deployment yamls for the operator (when using Helm chart). Redirect the output to the file under {deployDir}'
+    required: false
+  postGenerateHook:
+    description: 'Run these commands after operator-sdk has created the bundle files. Perhaps add additional metadata etc. yq is installed on the container image'
+  preGenerateHook:
+    description: 'Run these commands before operator-sdk has created the bundle files. Prepare the directory structure, files.'
+  operatorSdkVersion:
+    description: 'Version of the operator-sdk (https://github.com/operator-framework/operator-sdk/releases)'
+    required: false
+    default: v1.13.0
+
 outputs:
-  result:
-    description: 'The result'
+  treeOutput:
+    description: 'The result running tree command on the newly created bundle directory'
+  csvOutput:
+    description: 'Text representation of the ClusterServiceVersion manifest'
 runs:
   using: 'docker'
   image: 'Dockerfile'
+  env:
+    BUNDLE_VERSION: ${{ inputs.bundleVersion }}
+    CRDS_DIR: ${{ inputs.crdsDir }}
+    DEPLOY_DIR: ${{ inputs.crdsDir }}
+    GIT_TARGET_REVISION: ${{ inputs.targetRevision }}
+    HELM_COMMAND: ${{ inputs.helmCommand }}
+    NO_COLOR: 'true'
+    OPERATOR_SDK_VERSION: ${{ inputs.operatorSdkVersion }}
+    POST_GENERATE_HOOK: ${{ inputs.postGenerateHook }}
+    PRE_GENERATE_HOOK: ${{ inputs.preGenerateHook }}
+    VALIDATE_BUNDLE: ${{ inputs.validateBundle }}
   args:
-    - ${{ inputs.repo }}
+    - /generate.sh
+    - ${{ inputs.repoURL }}
     - ${{ inputs.bundleVersion }}

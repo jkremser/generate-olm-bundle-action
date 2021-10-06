@@ -13,4 +13,5 @@ RUN curl -sLo /usr/bin/operator-sdk https://github.com/operator-framework/operat
 
 COPY generate.sh /generate.sh
 COPY Makefile /Makefile
-ENTRYPOINT ["/generate.sh"]
+ENTRYPOINT [""]
+CMD ["/generate.sh"]

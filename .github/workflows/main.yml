@@ -6,10 +6,23 @@ jobs:
     name: Test the action
     steps:
       - name: Generate the OLM manifests
-        id: fib
+        id: olm
         uses: jkremser/generate-olm-bundle-action@0.0.1
         with:
-          repo: https://github.com/k8gb-io/k8gb
+          repoURL: https://github.com/k8gb-io/k8gb
           bundleVersion: 0.0.1
-      # - name: Get the output time
-      #   run: echo "The result is ${{ steps.fib.outputs.result }}"
+          crdsDir: chart/k8gb/templates/crds
+          deployDir: ./deploy-tmp/deploy-all.yaml
+          preGenerateHook: make -f /Makefile deployment-blueprint
+          postGenerateHook: make -f /Makefile bundle-add-examples bundle-add-crd-info
+          helmCommand: |
+            helm dependency update && \
+            helm -n placeholder template ./chart/k8gb \
+              --name-template=k8gb \
+              --set k8gb.securityContext.runAsUser=null \
+              --set k8gb.log.format=simple \
+              --set k8gb.log.level=info
+      # - name: Print the CSV
+      #   run: echo "${{ steps.olm.outputs.csvOutput }}"
+      # - name: Print the dir
+      #   run: echo "${{ steps.olm.outputs.treeOutput }}"
