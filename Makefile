@@ -64,7 +64,7 @@ deployment-blueprint: ## Renders the helm chart to provide a snapshot of the dep
 	-rm -Rf $(DEPLOY_DIR)
 	mkdir -p $(DEPLOY_DIR)
 	eval $(PREPARE_HELM_COMMAND)
-	sh -c "$(HELM_COMMAND)" > all.yaml
+	sh -c "$(shell echo $(HELM_COMMAND) | xargs)" > all.yaml
 	@echo "first 5 lines:"
 	-@head -5 all.yaml
 	@echo "..."

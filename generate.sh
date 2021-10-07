@@ -9,13 +9,23 @@ _BUNDLE_VERSION=$2
 main() {
     env | sort
     
-    # if repoURL contains exactly 1 / (org/repo handle), prepend the github prefix
-    [[ "${_REPO}" =~ ^[^\/]*\/[^\/]*$ ]] && _REPO="https://github.com/${_REPO}"
-    echo Cloning the repo ${_REPO}..
-    git clone ${_REPO} && cd "$(basename "$_" .git)"
-    git reset --hard ${GIT_TARGET_REVISION} 2> /dev/null || git reset --hard origin/${GIT_TARGET_REVISION}
+    [[ ${CLONE_REPO} == "true" ]] && {
+        # if repoURL contains exactly 1 / (org/repo handle), prepend the github prefix
+        [[ "${_REPO}" =~ ^[^\/]*\/[^\/]*$ ]] && _REPO="https://github.com/${_REPO}.git"
+        echo Cloning the repo ${_REPO}..
+        git clone ${_REPO}
+        cd "$(basename "$_" .git)"
+        git reset --hard ${GIT_TARGET_REVISION} 2> /dev/null || git reset --hard origin/${GIT_TARGET_REVISION}
+    }
+    [[ ! -z "${LOCAL_PATH}" ]] && cd ${LOCAL_PATH}
     export REPO_ROOT=${PWD}
     echo PWD is ${PWD}
+
+    [[ ${VALIDATE_KUSTOMIZE} == "true" ]] && {
+            pushd config/manifests/
+            kustomize build || exit 1
+            popd
+    }
 
     # pre-generate hook
     [[ ! -z "${PRE_GENERATE_HOOK}" ]] && {
@@ -41,8 +51,8 @@ main() {
     }
 
     # optionally run the validation
-    [[ VALIDATE_BUNDLE == "true" ]] && {
-        BUNDLE_VERSION=${_BUNDLE_VERSION} make -f /Makefile bundle-validate
+    [[ ${VALIDATE_BUNDLE} == "true" ]] && {
+        BUNDLE_VERSION=${_BUNDLE_VERSION} make -f /Makefile bundle-validate || exit 1
     }
 
     # print the result

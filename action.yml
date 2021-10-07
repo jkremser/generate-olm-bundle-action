@@ -4,12 +4,18 @@ branding:
   icon: file-plus
   color: purple
 inputs:
+  cloneRepo:
+    description: 'Whether to clone the git repo specified by repoURL and targetRevision'
+    default: true
   repoURL:
     description: 'Git repository'
     required: true
   targetRevision:
     description: 'Specific commit, tag or branch in given git repository. Defaults to HEAD'
     default: HEAD
+  localPath:
+    description: 'Relative path in the repository that should be set as the CWD'
+    required: false
   bundleVersion:
     description: 'Version of the bundle that should be generated'
     required: true
@@ -17,7 +23,11 @@ inputs:
     description: 'Relative path on the repo to the crds'
     required: true
   validateBundle:
-    description: 'If "true" operator-sdk bundle validate will be run'
+    description: 'If "true", operator-sdk bundle validate will be run. Requires docker to be installed on the image.'
+    required: false
+    default: 'false'
+  validateKustomize:
+    description: 'If "true", kustomize build will be run on config/manifests/'
     required: false
     default: 'true'
   deployDir:
@@ -48,16 +58,20 @@ runs:
   image: 'Dockerfile'
   env:
     BUNDLE_VERSION: ${{ inputs.bundleVersion }}
+    CLONE_REPO: ${{ inputs.cloneRepo }}
     CRDS_DIR: ${{ inputs.crdsDir }}
     DEPLOY_DIR: ${{ inputs.crdsDir }}
     GIT_TARGET_REVISION: ${{ inputs.targetRevision }}
+    GIT_REPO_URL: ${{ inputs.repoURL }}
     HELM_COMMAND: ${{ inputs.helmCommand }}
+    LOCAL_PATH: ${{ inputs.localPath }}
     NO_COLOR: 'true'
     OPERATOR_SDK_VERSION: ${{ inputs.operatorSdkVersion }}
     POST_GENERATE_HOOK: ${{ inputs.postGenerateHook }}
     PRE_GENERATE_HOOK: ${{ inputs.preGenerateHook }}
     PREPARE_HELM_COMMAND: ${{ inputs.prepareHelmCommand }}
     VALIDATE_BUNDLE: ${{ inputs.validateBundle }}
+    VALIDATE_KUSTOMIZE: ${{ inputs.validateKustomize }}
   args:
     - /generate.sh
     - ${{ inputs.repoURL }}
