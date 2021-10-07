@@ -1,7 +1,8 @@
+name: Simple OLM build
 on: [push]
 
 jobs:
-  fib:
+  olm:
     runs-on: ubuntu-latest
     name: Test the action
     steps:

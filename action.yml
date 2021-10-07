@@ -36,6 +36,9 @@ inputs:
   helmCommand:
     description: 'Use this command to render the deployment yamls for the operator (when using Helm chart). Redirect the output to the file under {deployDir}'
     required: false
+  operatorName:
+    description: 'Under this name we create the PR against the upstream community-operators repo'
+    required: false
   prepareHelmCommand:
     description: 'Use this to run helm update for instance'
     required: false

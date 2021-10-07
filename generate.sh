@@ -6,7 +6,7 @@
 _REPO=$1
 _BUNDLE_VERSION=$2
 
-main() {
+main(){
     env | sort
     
     [[ ${CLONE_REPO} == "true" ]] && {
@@ -54,6 +54,7 @@ main() {
     [[ ${VALIDATE_BUNDLE} == "true" ]] && {
         BUNDLE_VERSION=${_BUNDLE_VERSION} make -f /Makefile bundle-validate || exit 1
     }
+    cp -r ./bundle ..
 
     # print the result
     TREE_OUTPUT="$(tree ./bundle)"
@@ -61,14 +62,15 @@ main() {
     CSV_OUTPUT="$(cat bundle/manifests/*.clusterserviceversion.yaml)"
     echo -e "\n\n\n\nCSV:\n=========================\n\n${CSV_OUTPUT}"
     
-    TREE_OUTPUT="$(escape $TREE_OUTPUT)"
-    CSV_OUTPUT="$(escape $CSV_OUTPUT)"
-    echo "::set-output name=treeOutput::$TREE_OUTPUT"
-    echo "::set-output name=csvOutput::$CSV_OUTPUT"
+    TREE_OUTPUT=$(escape "$TREE_OUTPUT")
+    CSV_OUTPUT=$(escape "$CSV_OUTPUT")
+    # echo "::set-output name=treeOutput::${TREE_OUTPUT}"
+    # echo "::set-output name=csvOutput::${CSV_OUTPUT}"
 }
 
 escape(){
-    [[ $# != 1 ]] && echo "Usage: $0 <arg>" && exit 1
+    echo $#
+    [[ $# != 1 ]] && echo "Usage: $0 <arg>"
     local _P=$1
     _P="${_P//'%'/'%25'}"
     _P="${_P//$'\n'/'%0A'}"

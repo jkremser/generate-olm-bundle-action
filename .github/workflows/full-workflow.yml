@@ -1,0 +1,67 @@
+name: Full workflow including PR
+on: 
+  workflow_dispatch:
+    inputs:
+      bundleVersion:
+        description: Version of the bundle that should be generated
+        required: true
+        default: 0.0.2
+      operatorName:
+        description: Name of operator
+        required: false
+        default: k8gb
+jobs:
+  olm:
+    runs-on: ubuntu-latest
+    name: Generate OLM Bundle and PR
+    steps:
+      - name: Generate the OLM manifests
+        id: olm
+        uses: jkremser/generate-olm-bundle-action@0.0.1
+        with:
+          # either full git url or github handle (org/project)
+          repoURL: k8gb-io/k8gb
+          targetRevision: operatorhub
+          bundleVersion: ${{ github.event.inputs.bundleVersion }}
+          crdsDir: chart/k8gb/templates/crds
+          deployDir: ./deploy-tmp/deploy-all.yaml
+          preGenerateHook: make -f /Makefile deployment-blueprint
+          postGenerateHook: make -f /Makefile bundle-add-examples bundle-add-crd-info
+          prepareHelmCommand: cd ./chart/k8gb && helm dependency update
+          helmCommand: |
+            helm -n placeholder template ./chart/k8gb \
+              --name-template=k8gb \
+              --set k8gb.securityContext.runAsUser=null \
+              --set k8gb.log.format=simple \
+              --set k8gb.log.level=info
+      - uses: actions/checkout@v2
+        with:
+          # repository: k8s-operatorhub/community-operators
+          repository: jkremser/community-operators
+          path: sandbox
+          token: ${{ secrets.GH_TOKEN }}
+          fetch-depth: 0
+      - name: Fetch and copy the bundle
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/sandbox/community-operators/operators/${{ github.event.inputs.operatorName }}/
+          cp -r $GITHUB_WORKSPACE/bundle $GITHUB_WORKSPACE/sandbox/community-operators/operators/${{ github.event.inputs.operatorName }}/${{ github.event.inputs.bundleVersion }}
+          cd $GITHUB_WORKSPACE/sandbox/community-operators/
+          # git config user.name github-actions
+          # git config user.email github-actions@github.com
+          # git add .
+          # git commit -m "OLM bundle for ${{ github.event.inputs.operatorName }}@${{ github.event.inputs.bundleVersion }}"
+      - name: Open Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          path: sandbox
+          commit-message: OLM bundle for ${{ github.event.inputs.operatorName }}@${{ github.event.inputs.bundleVersion }}
+          title: OLM bundle for ${{ github.event.inputs.operatorName }}@${{ github.event.inputs.bundleVersion }}
+          body: ':package:'
+          branch: ${{ github.event.inputs.operatorName }}-${{ github.event.inputs.bundleVersion }}
+          signoff: true
+      - name: Check PR
+        run: |
+          echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
+          echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"
